@@ -16,9 +16,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.GpsStatus.Listener;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -29,10 +32,11 @@ import android.util.Log;
  * @author bzb
  *
  */
-public class LoggingService extends Service implements SensorEventListener, LocationListener {
+public class LoggingService extends Service implements SensorEventListener, LocationListener, Listener {
 
 	private PrintWriter captureFile;
 	private PowerManager.WakeLock wl;
+	private LocationManager lm;
 
 	public LoggingService () {
 		
@@ -92,7 +96,6 @@ public class LoggingService extends Service implements SensorEventListener, Loca
     		List<Sensor> sensors = sensorManager.getSensorList( Sensor.TYPE_ALL );
     		Log.i(getClass().getName(),"Listed sensors");
     		
-    		int i = 0;
     		for (Sensor sensor : sensors) {
     			sensorManager.registerListener( 
                         this, 
@@ -102,11 +105,18 @@ public class LoggingService extends Service implements SensorEventListener, Loca
     			captureFile.println(sensor.getType() + "," + sensor.getName() + "," + sensor.getResolution() + "," + sensor.getMaximumRange() + "," + sensor.getPower());
     		}
     		
-    		LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 50, this);
-    		Log.i(getClass().getName(),"Started GPS tracking");
-
+    		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    		List<String> providers = lm.getProviders(true);
+    		Log.i(getClass().getName(),"Listed providers");
     		
+    		for (String provider : providers) {
+    			Log.i(getClass().getName(),"Enabled provider " + provider);
+    		}
+    		
+    		lm.addGpsStatusListener(this);
+    		
+    		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+    		Log.i(getClass().getName(),"Started GPS tracking");
         } catch( IOException ex ) {
             Log.e( getClass().getName(), ex.getMessage(), ex );
         }
@@ -132,26 +142,51 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 	@Override
 	public void onLocationChanged(Location arg0) {
 		// TODO Auto-generated method stub
-		captureFile.print(System.currentTimeMillis() + ",G," + arg0.getLatitude() + "," + arg0.getLongitude() + "," + arg0.getAccuracy() + "," + arg0.getAltitude() + "," + arg0.getBearing() + "," + arg0.getSpeed());
+		captureFile.println(System.currentTimeMillis() + ",G," + arg0.getLatitude() + "," + arg0.getLongitude() + "," + arg0.getAccuracy() + "," + arg0.getAltitude() + "," + arg0.getBearing() + "," + arg0.getSpeed());
 		Log.i(getClass().getName(), "GPS location changed: lat="+arg0.getLatitude()+", lon="+arg0.getLongitude());
 	}
 
 	@Override
 	public void onProviderDisabled(String arg0) {
 		// TODO Auto-generated method stub
-		Log.i(getClass().getName(), "GPS provider disabled " + arg0);
 	}
 
 	@Override
 	public void onProviderEnabled(String arg0) {
 		// TODO Auto-generated method stub
-		Log.i(getClass().getName(), "GPS provider enabled " + arg0);
 	}
 
 	@Override
 	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
 		// TODO Auto-generated method stub
-		Log.i(getClass().getName(), "GPS status changed to " + arg0 + " [" + arg1 + "]");
+	}
+
+	int satellitesSeen = 0;
+	
+	@Override
+	public void onGpsStatusChanged(int arg0) {
+		switch (arg0) {
+		case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+			GpsStatus status = lm.getGpsStatus(null);
+			int i = 0;
+			for (GpsSatellite gps : status.getSatellites()) {
+				i++;
+			}
+			if (i != satellitesSeen) {
+				satellitesSeen = i;
+				Log.i(getClass().getName(), satellitesSeen + " satellites seen");
+			}
+			break;
+		case GpsStatus.GPS_EVENT_FIRST_FIX:
+			Log.i(getClass().getName(), "GPS fix acquired");
+			break;
+		case GpsStatus.GPS_EVENT_STARTED:
+			Log.i(getClass().getName(), "GPS fired up");
+			break;
+		case GpsStatus.GPS_EVENT_STOPPED:
+			Log.i(getClass().getName(), "GPS powered down");
+			break;
+		}	
 	}
 
 }
