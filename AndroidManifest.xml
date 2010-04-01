@@ -3,9 +3,16 @@
       package="bzb.android.logger"
       android:versionCode="1"
       android:versionName="1.0">
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
-        <activity android:name=".LoggingActivity"
-                  android:label="@string/app_name">
+    <application android:icon="@drawable/icon" android:label="@string/title" android:debuggable="true">
+        <activity android:name=".StartLoggingActivity"
+                  android:label="@string/app_name1">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".StopLoggingActivity"
+                  android:label="@string/app_name2">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -17,7 +24,11 @@
 			</intent-filter>
 		</service>
     </application>
-	<uses-permission
-		android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> 
-
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
+	<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+	<uses-permission android:name="android.permission.CONTROL_LOCATION_UPDATES" />
 </manifest> 

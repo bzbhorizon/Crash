@@ -10,22 +10,29 @@ import java.io.PrintWriter;
 import java.util.List;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 /**
  * @author bzb
  *
  */
-public class LoggingService extends Service implements SensorEventListener {
+public class LoggingService extends Service implements SensorEventListener, LocationListener {
 
 	private PrintWriter captureFile;
+	private PowerManager.WakeLock wl;
 
 	public LoggingService () {
 		
@@ -41,13 +48,27 @@ public class LoggingService extends Service implements SensorEventListener {
 	}
 
 	public void onCreate() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, getClass().getName());
+        wl.acquire();
+        Log.i(getClass().getName(),"Acquired wakelock");
+        
 		super.onCreate();
 		Log.i(getClass().getName(),"Started service");
 		
 		startLogging();
 	}
+	
+	public void onPause() {
+		
+	}
 
 	public void onDestroy() {
+		if (wl != null) {
+			wl.release();
+			Log.i(getClass().getName(),"Released wakelock");
+		}
+		
 		super.onDestroy();
 		
 		if (captureFile != null) {
@@ -62,7 +83,7 @@ public class LoggingService extends Service implements SensorEventListener {
 		File captureFileName = new File( Environment.getExternalStorageDirectory(), "log.csv" );
 		Log.i(getClass().getName(),"Linked to file");
 		
-        try {
+        try {       	
             captureFile = new PrintWriter( new FileWriter( captureFileName, true ) );
             Log.i(getClass().getName(),"Opened file " + captureFileName.getName());
             
@@ -81,6 +102,11 @@ public class LoggingService extends Service implements SensorEventListener {
     			captureFile.println(sensor.getType() + "," + sensor.getName() + "," + sensor.getResolution() + "," + sensor.getMaximumRange() + "," + sensor.getPower());
     		}
     		
+    		LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 60000, 50, this);
+    		Log.i(getClass().getName(),"Started GPS tracking");
+
+    		
         } catch( IOException ex ) {
             Log.e( getClass().getName(), ex.getMessage(), ex );
         }
@@ -91,13 +117,7 @@ public class LoggingService extends Service implements SensorEventListener {
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		/*StringBuilder b = new StringBuilder();
-        for( int i = 0 ; i < event.values.length ; ++i ) {
-            if( i > 0 )
-                b.append( " , " );
-            b.append( Float.toString( event.values[i] ) );
-        }*/
-        captureFile.print(event.sensor.getType() + ",");
+        captureFile.print(System.currentTimeMillis() + "," + event.sensor.getType() + ",");
         //Log.i( getClass().getName(), event.sensor.getName() + " onSensorChanged" );
         if( captureFile != null ) {
                 for( int i = 0 ; i < event.values.length ; ++i ) {
@@ -107,6 +127,31 @@ public class LoggingService extends Service implements SensorEventListener {
                 }
                 captureFile.println();
         }
+	}
+
+	@Override
+	public void onLocationChanged(Location arg0) {
+		// TODO Auto-generated method stub
+		captureFile.print(System.currentTimeMillis() + ",G," + arg0.getLatitude() + "," + arg0.getLongitude() + "," + arg0.getAccuracy() + "," + arg0.getAltitude() + "," + arg0.getBearing() + "," + arg0.getSpeed());
+		Log.i(getClass().getName(), "GPS location changed: lat="+arg0.getLatitude()+", lon="+arg0.getLongitude());
+	}
+
+	@Override
+	public void onProviderDisabled(String arg0) {
+		// TODO Auto-generated method stub
+		Log.i(getClass().getName(), "GPS provider disabled " + arg0);
+	}
+
+	@Override
+	public void onProviderEnabled(String arg0) {
+		// TODO Auto-generated method stub
+		Log.i(getClass().getName(), "GPS provider enabled " + arg0);
+	}
+
+	@Override
+	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+		// TODO Auto-generated method stub
+		Log.i(getClass().getName(), "GPS status changed to " + arg0 + " [" + arg1 + "]");
 	}
 
 }

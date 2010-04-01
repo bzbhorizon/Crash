@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Horizon Crash Logger</string>
-    <string name="app_name">Crash Logger</string>
+    <string name="title">Horizon Crash Logger</string>
+    <string name="app_name1">Log</string>
+    <string name="app_name2">Stop log</string>
 </resources>
