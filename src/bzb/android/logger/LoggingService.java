@@ -56,25 +56,29 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 		super.onCreate();
 		Log.i(getClass().getName(),"Started service");
 		
-		try {
-			startLogging();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (Config.logSensors) {
+			try {
+				startLogging();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-		
-		try {
-			startTracking();
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		if (Config.logGps) {
+			try {
+				startTracking();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
-		
-		/*try {
-			startAudioCapture();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
+		if (Config.logMedia == Config.MEDIA_LOG_AUDIO) {
+			try {
+				startAudioCapture();
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void onPause() {

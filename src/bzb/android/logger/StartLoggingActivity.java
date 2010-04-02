@@ -32,7 +32,9 @@ public class StartLoggingActivity extends Activity implements Callback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        startVideoCapture();
+        if (Config.logMedia == Config.MEDIA_LOG_BOTH) {
+        	startVideoCapture();
+        }
 
         Log.i(getClass().getName(),"Started activity");
         
