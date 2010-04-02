@@ -182,17 +182,21 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 		Log.i(getClass().getName(),"Opened file " + captureFileName.getName());
 		
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		List<String> providers = locationManager.getProviders(true);
+		/*List<String> providers = locationManager.getProviders(true);
 		Log.i(getClass().getName(),"Listed providers");
 		
 		for (String provider : providers) {
 			Log.i(getClass().getName(),"Enabled provider " + provider);
+		}*/
+		
+		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+			locationManager.addGpsStatusListener(this);
+			
+			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+			Log.i(getClass().getName(),"Started GPS tracking");
+		} else {
+			Log.i(getClass().getName(),"GPS is not enabled; no GPS tracking");
 		}
-		
-		locationManager.addGpsStatusListener(this);
-		
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-		Log.i(getClass().getName(),"Started GPS tracking");
 	}
 	
 	@Override

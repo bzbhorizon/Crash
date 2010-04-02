@@ -3,7 +3,9 @@ package bzb.android.logger;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.location.LocationManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,8 +14,10 @@ import android.os.StatFs;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.SurfaceHolder.Callback;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 /**
  * @author bzb
@@ -31,6 +35,13 @@ public class StartLoggingActivity extends Activity implements Callback {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+    	TextView gpsStatus = (TextView) findViewById(R.id.gps_status);
+        if (((LocationManager) getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        	gpsStatus.setText("GPS enabled");
+        } else {
+        	gpsStatus.setText("GPS not enabled - enable it in the Settings menu");
+        }
         
         if (Config.logMedia == Config.MEDIA_LOG_BOTH) {
         	startVideoCapture();
