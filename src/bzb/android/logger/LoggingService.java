@@ -192,7 +192,7 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 			locationManager.addGpsStatusListener(this);
 			
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30000, 0, this);
 			Log.i(getClass().getName(),"Started GPS tracking");
 		} else {
 			Log.i(getClass().getName(),"GPS is not enabled; no GPS tracking");
@@ -258,10 +258,10 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 	    audioRecorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/alog_" + System.currentTimeMillis() + ".3gp");
 	    
 	    audioRecorder.prepare();
-	    Log.i(getClass().getName(), "Prepared recorder");
+	    Log.i(getClass().getName(), "Prepared audio recorder");
 	    
 	    audioRecorder.start();
-	    Log.i(getClass().getName(), "Started recorder");
+	    Log.i(getClass().getName(), "Started audio recorder");
 	}
 
 }
