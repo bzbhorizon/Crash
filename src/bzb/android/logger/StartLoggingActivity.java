@@ -101,8 +101,6 @@ public class StartLoggingActivity extends Activity implements Callback {
 
 		public void onTimeSet(TimePicker view, int h, int m) 
         {
-			
-	        
         	int wait = h * 60 * 60 * 1000 + m * 60 * 1000;
         	
     		sender = PendingIntent.getService(StartLoggingActivity.this, 0, 
