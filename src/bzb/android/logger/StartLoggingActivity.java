@@ -15,9 +15,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.PowerManager;
 import android.os.StatFs;
-import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -37,6 +35,8 @@ public class StartLoggingActivity extends Activity implements Callback {
     private boolean stopProgress = false;
     private Handler mHandler = new Handler();
     private TextView countdownStatus;
+    private MediaRecorder videoRecorder;
+    private SurfaceHolder surfaceHolder;
 	
     /** Called when the activity is first created. */
     @Override
@@ -44,9 +44,15 @@ public class StartLoggingActivity extends Activity implements Callback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
        
-        countdownStatus = (TextView) findViewById(R.id.countdown_status);
+        if (Config.logMedia == Config.MEDIA_LOG_BOTH) {
+			SurfaceView surfaceView = (SurfaceView)findViewById(R.id.surfaceView);
+	        surfaceHolder = surfaceView.getHolder();
+	        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+	        surfaceHolder.addCallback(StartLoggingActivity.this);
+	        
+		}
         
-        showDialog(R.layout.countdown_dialog);
+        countdownStatus = (TextView) findViewById(R.id.countdown_status);
         
     	TextView gpsStatus = (TextView) findViewById(R.id.gps_status);
         if (((LocationManager) getSystemService(Context.LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -55,14 +61,11 @@ public class StartLoggingActivity extends Activity implements Callback {
         	gpsStatus.setText("GPS not enabled - enable it in the Settings menu");
         }
 
+        showDialog(R.layout.countdown_dialog);
         Log.i(getClass().getName(),"Started activity");
     }
     
     public void onDestroy () {
-    	if (mTimeSetListener != null && am != null && sender != null) {
-    		am.cancel(sender);
-    	}
-    	
 		if (videoRecorder != null) {
 			try {
 				videoRecorder.stop();
@@ -94,10 +97,12 @@ public class StartLoggingActivity extends Activity implements Callback {
     
     private TimePickerDialog.OnTimeSetListener mTimeSetListener =
     new TimePickerDialog.OnTimeSetListener() 
-    {        
+    {
 
 		public void onTimeSet(TimePicker view, int h, int m) 
         {
+			
+	        
         	int wait = h * 60 * 60 * 1000 + m * 60 * 1000;
         	
     		sender = PendingIntent.getService(StartLoggingActivity.this, 0, 
@@ -119,8 +124,9 @@ public class StartLoggingActivity extends Activity implements Callback {
                 	countdownStatus.setText("Dumping now");
                 	
                 	if (Config.logMedia == Config.MEDIA_LOG_BOTH) {
-                    	startVideoCapture();
-                    }
+                		videoRecorder.start();
+                		Log.i(getClass().getName(), "Started video recorder");
+                	}
                    
                     mProgress = (ProgressBar) findViewById(R.id.progress_bar);
 
@@ -164,39 +170,27 @@ public class StartLoggingActivity extends Activity implements Callback {
     };
 
     /////////////////////////
-
-	private MediaRecorder videoRecorder;
-    
-    private void startVideoCapture () {
-    	SurfaceView surfaceView = (SurfaceView)findViewById(R.id.surfaceView);
-        SurfaceHolder surfaceHolder = surfaceView.getHolder();
-        surfaceHolder.addCallback(this);
-        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        
-        videoRecorder = new MediaRecorder();
-		
-	    videoRecorder.setPreviewDisplay(surfaceHolder.getSurface());
-	    
-		videoRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-		videoRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-		videoRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-		videoRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-		videoRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
-		videoRecorder.setVideoFrameRate(5);
-		videoRecorder.setVideoSize(320, 240);
-		videoRecorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/vlog_" + System.currentTimeMillis() + ".mp4");
-    }
     
 	@Override
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {}
 	
 	@Override
-	public void surfaceCreated(SurfaceHolder arg0) {		
-		try {
+	public void surfaceCreated(SurfaceHolder arg0) {
+		Log.i(getClass().getName(), "Created surface");
+		videoRecorder = new MediaRecorder();
+	    videoRecorder.setPreviewDisplay(surfaceHolder.getSurface());
+		videoRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+		videoRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+		videoRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+		videoRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+		videoRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
+		videoRecorder.setVideoFrameRate(5);
+		videoRecorder.setVideoSize(320, 240);
+		videoRecorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/vlog_" + System.currentTimeMillis() + ".3gp");
+        
+        try {
 			videoRecorder.prepare();
-			Log.i(getClass().getName(), "Prepared video recorder");	
-			videoRecorder.start();
-		    Log.i(getClass().getName(), "Started video recorder");
+			Log.i(getClass().getName(), "Prepared video recorder");
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
