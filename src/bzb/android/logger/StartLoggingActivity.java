@@ -7,8 +7,10 @@ import android.app.AlarmManager;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -31,12 +33,15 @@ import android.widget.TimePicker;
 public class StartLoggingActivity extends Activity implements Callback {
 	
     private ProgressBar mProgress;
-    private int mProgressStatus = 0;
+    private ProgressBar bProgress;
+    private int mProgressStatus = 100;
+    private int level = 100;
     private boolean stopProgress = false;
     private Handler mHandler = new Handler();
     private TextView countdownStatus;
     private MediaRecorder videoRecorder;
     private SurfaceHolder surfaceHolder;
+	private BroadcastReceiver br;
 	
     /** Called when the activity is first created. */
     @Override
@@ -62,10 +67,26 @@ public class StartLoggingActivity extends Activity implements Callback {
         }
 
         showDialog(R.layout.countdown_dialog);
+     
+        br = new BroadcastReceiver() {
+        	public void onReceive(Context context, Intent intent) {
+        		int rawlevel = intent.getIntExtra("level", -1);
+        		int scale = intent.getIntExtra("scale", -1);
+        		if (rawlevel >= 0 && scale > 0) {
+        			level = (rawlevel * 100) / scale;
+        			Log.i(getClass().getName(),"Battery " + level);
+        		}
+        	}
+        };
+        IntentFilter battFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(br, battFilter);
+        
         Log.i(getClass().getName(),"Started activity");
     }
     
     public void onDestroy () {
+    	unregisterReceiver(br);
+    	
 		if (videoRecorder != null) {
 			try {
 				videoRecorder.stop();
@@ -127,6 +148,7 @@ public class StartLoggingActivity extends Activity implements Callback {
                 	}
                    
                     mProgress = (ProgressBar) findViewById(R.id.progress_bar);
+                    bProgress = (ProgressBar) findViewById(R.id.battery_bar);
 
                     // Start lengthy operation in a background thread
                     new Thread(new Runnable() {
@@ -134,16 +156,17 @@ public class StartLoggingActivity extends Activity implements Callback {
                         	StatFs statFs;
                             while (!stopProgress) {
                             	statFs = new StatFs(Environment.getExternalStorageDirectory().getAbsolutePath());
-                            	mProgressStatus = 100 - (int)((double)statFs.getAvailableBlocks() / (double)(statFs.getBlockCount() - (statFs.getFreeBlocks() - statFs.getAvailableBlocks())) * 100);
+                            	mProgressStatus = (int)((double)statFs.getAvailableBlocks() / (double)(statFs.getBlockCount() - (statFs.getFreeBlocks() - statFs.getAvailableBlocks())) * 100);
                             	//Log.i(getClass().getName(), "Available space =" + statFs.getAvailableBlocks() * statFs.getBlockSize());
                             	
-                            	if (mProgressStatus >= 99) {
+                            	if (mProgressStatus < 2 || level < 2) {
                             		Intent loggingServiceIntent = new Intent();
                                     loggingServiceIntent.setAction("bzb.android.logger.STARTLOGGING");
                                     stopService(loggingServiceIntent);
-                                    Log.i(getClass().getName(),"Memory full: sent intent to stop logging service");
+                                    Log.i(getClass().getName(),"Memory/battery out: sent intent to stop logging service");
                                     
                                     stopProgress = true;
+                                    StartLoggingActivity.this.finish();
                                     break;
                             	}
                             	
@@ -151,6 +174,7 @@ public class StartLoggingActivity extends Activity implements Callback {
                                 mHandler.post(new Runnable() {
                                     public void run() {
                                         mProgress.setProgress(mProgressStatus);
+                                        bProgress.setProgress(level);
                                     }
                                 });
                                 
