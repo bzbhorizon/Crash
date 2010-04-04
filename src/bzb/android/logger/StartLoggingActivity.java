@@ -67,7 +67,7 @@ public class StartLoggingActivity extends Activity implements Callback {
         }
 
         showDialog(R.layout.countdown_dialog);
-     
+      
         br = new BroadcastReceiver() {
         	public void onReceive(Context context, Intent intent) {
         		int rawlevel = intent.getIntExtra("level", -1);
