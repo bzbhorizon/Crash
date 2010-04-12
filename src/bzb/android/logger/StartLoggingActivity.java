@@ -17,7 +17,9 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.StatFs;
+import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -120,14 +122,21 @@ public class StartLoggingActivity extends Activity implements Callback {
     new TimePickerDialog.OnTimeSetListener() 
     {
 
+		private WakeLock wl;
+
 		public void onTimeSet(TimePicker view, int h, int m) 
         {
+			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+	        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, getClass().getName());
+	        wl.acquire();
+	        Log.i(getClass().getName(),"Acquired wakelock");
+			
         	int wait = h * 60 * 60 * 1000 + m * 60 * 1000;
         	
     		sender = PendingIntent.getService(StartLoggingActivity.this, 0, 
     				new Intent(StartLoggingActivity.this, LoggingService.class), 0);
     		am = (AlarmManager) getSystemService(ALARM_SERVICE);
-    		am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+wait, sender);
+    		am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + wait + 1000, sender);
     		Log.i(getClass().getName(), "Scheduled logging service to start in " + wait);
     		
     		Log.i(getClass().getName(), "Started countdown");
@@ -139,7 +148,12 @@ public class StartLoggingActivity extends Activity implements Callback {
                 	//Log.i(getClass().getName(), "Ticking");
                 }
 
-                public void onFinish() {         	
+                public void onFinish() {
+                	if (wl != null) {
+            			wl.release();
+            			Log.i(getClass().getName(),"Released wakelock");
+            		}
+                	
                 	countdownStatus.setText("Dumping now");
                 	
                 	if (Config.logMedia == Config.MEDIA_LOG_BOTH) {
