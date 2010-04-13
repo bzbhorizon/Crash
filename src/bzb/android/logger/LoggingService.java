@@ -49,7 +49,7 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 
 	public void onCreate() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, getClass().getName());
+        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP|PowerManager.ON_AFTER_RELEASE, getClass().getName());
         wl.acquire();
         Log.i(getClass().getName(),"Acquired wakelock");
         

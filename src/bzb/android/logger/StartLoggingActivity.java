@@ -127,7 +127,7 @@ public class StartLoggingActivity extends Activity implements Callback {
 		public void onTimeSet(TimePicker view, int h, int m) 
         {
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-	        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, getClass().getName());
+	        wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP|PowerManager.ON_AFTER_RELEASE, getClass().getName());
 	        wl.acquire();
 	        Log.i(getClass().getName(),"Acquired wakelock");
 			
