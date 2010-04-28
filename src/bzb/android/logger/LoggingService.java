@@ -53,6 +53,8 @@ public class LoggingService extends Service implements SensorEventListener, Loca
         wl.acquire();
         Log.i(getClass().getName(),"Acquired wakelock");
         
+        //StartLoggingActivity.logId = String.valueOf(System.currentTimeMillis());
+        
 		super.onCreate();
 		Log.i(getClass().getName(),"Started service");
 		
@@ -133,7 +135,7 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 	private PrintWriter sCaptureFile;
 	
 	private void startLogging () throws IOException {
-		File captureFileName = new File( Environment.getExternalStorageDirectory(), "slog.csv" );
+		File captureFileName = new File( Environment.getExternalStorageDirectory(), "slog_" + StartLoggingActivity.logId + ".csv" );
 		Log.i(getClass().getName(),"Linked to sensor log file");
 		sCaptureFile = new PrintWriter( new FileWriter( captureFileName, true ) );
 		Log.i(getClass().getName(),"Opened file " + captureFileName.getName());
@@ -176,7 +178,7 @@ public class LoggingService extends Service implements SensorEventListener, Loca
 	private PrintWriter gCaptureFile;
 	
 	private void startTracking () throws IOException {
-		File captureFileName = new File( Environment.getExternalStorageDirectory(), "glog.csv" );
+		File captureFileName = new File( Environment.getExternalStorageDirectory(), "glog_" + StartLoggingActivity.logId + ".csv" );
 		Log.i(getClass().getName(),"Linked to GPS log file");
 		gCaptureFile = new PrintWriter( new FileWriter( captureFileName, true ) );
 		Log.i(getClass().getName(),"Opened file " + captureFileName.getName());

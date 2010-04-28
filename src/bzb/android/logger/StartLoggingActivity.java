@@ -44,6 +44,7 @@ public class StartLoggingActivity extends Activity implements Callback {
     private MediaRecorder videoRecorder;
     private SurfaceHolder surfaceHolder;
 	private BroadcastReceiver br;
+	public static String logId = String.valueOf(System.currentTimeMillis());
 	
     /** Called when the activity is first created. */
     @Override
@@ -56,8 +57,9 @@ public class StartLoggingActivity extends Activity implements Callback {
 	        surfaceHolder = surfaceView.getHolder();
 	        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 	        surfaceHolder.addCallback(StartLoggingActivity.this);
-	        
 		}
+        
+        //logId = String.valueOf(System.currentTimeMillis());
         
         countdownStatus = (TextView) findViewById(R.id.countdown_status);
         
@@ -222,7 +224,7 @@ public class StartLoggingActivity extends Activity implements Callback {
 		videoRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
 		videoRecorder.setVideoFrameRate(5);
 		videoRecorder.setVideoSize(320, 240);
-		videoRecorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/vlog_" + System.currentTimeMillis() + ".3gp");
+		videoRecorder.setOutputFile(Environment.getExternalStorageDirectory().getAbsolutePath() + "/vlog_" + logId + ".3gp");
         
         try {
 			videoRecorder.prepare();
